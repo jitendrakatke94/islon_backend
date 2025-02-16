@@ -1,5 +1,5 @@
 import ResponseModel from "../db/responseObj.js";
-import {query, insert} from "../db/db_connection.js";
+import {query, insert, updateQuery} from "../db/db_connection.js";
 import moment from 'moment';
 
 const getEvents = async (req, res) => {
@@ -16,12 +16,16 @@ const getEvents = async (req, res) => {
         clause= clause +` and location = ${reqBody.location}`
     }
     try {
-        var eventList = await query(`SELECT * FROM events where deleted_at IS NULL ${clause}`);
-        if(!eventList.status||eventList.response.length==0){
-            response = new ResponseModel(false,"ERROR",{message:`Invalid Data`});
-        }else{
-            response=new ResponseModel(true,'SUCCESS',eventList.response);
-        }
+        // if(reqBody.user_role == 'admin') {
+            var eventList = await query(`SELECT * FROM events where deleted_at IS NULL ${clause}`);
+            if(!eventList.status||eventList.response.length==0){
+                response = new ResponseModel(false,"ERROR",{message:`Invalid Data`});
+            }else{
+                response=new ResponseModel(true,'SUCCESS',eventList.response);
+            }
+        // }else {
+        //     response=new ResponseModel(true,'ERROR',{message: 'You dont have an acceess'});
+        // }
     }catch(error){
         response = new ResponseModel(false,"ERROR",{message:`${error.message}`});
     }
@@ -32,11 +36,23 @@ const addEvents = async (req, res) => {
     let reqBody=req.body;
     let response={}
     try {
-        var event = await insert(`events`,reqBody);
-        if(event.response.insertId){
-            response = new ResponseModel(true,"SUCCESS",{message:"Event Created Successfullly"});
-        }else{
-            response = new ResponseModel(false,"ERROR",{message:`Invalid Data`});
+        if(reqBody.user_role == 'admin') {
+            var event = {
+                'title': reqBody.title,
+                'description':reqBody.description,
+                'date': reqBody.date,
+                'category':reqBody.category,
+                'location_id': reqBody.location_id,
+                'created_by': reqBody.user_id
+            };
+            var event = await insert(`events`,event);
+            if(event.response.insertId){
+                response = new ResponseModel(true,"SUCCESS",{message:"Event Created Successfullly"});
+            }else{
+                response = new ResponseModel(false,"ERROR",{message:`Invalid Data`});
+            }
+        }else {
+            response=new ResponseModel(true,'ERROR',{message: 'You dont have an acceess'});
         }
     }catch(error){
         response = new ResponseModel(false,"ERROR",{message:`${error.message}`});
@@ -44,15 +60,22 @@ const addEvents = async (req, res) => {
     res.status(200).json(response.print());
 }
 const updateEvent = async (req, res) => {
+    let reqParam = req.query;
+    console.log("reqParam", reqParam);
     let reqBody=req.body;
     let response={}
     try {
-        let updateSMSReport=await updateQuery("events",{title: reqBody.title, description: reqBody.description, date: reqBody.date, category: reqBody.category, location_id: reqBody.location_id},{id:reqBody.id})
-        if(updateSMSReport.status){
-            response = new ResponseModel(true,"SUCCESS",{message:"Event Updated Successfullly"});
-        }else{
-            response = new ResponseModel(false,"ERROR",{message:`Invalid Data`});
+        if(reqBody.user_role == 'admin') {
+            let updateSMSReport=await updateQuery("events",{title: reqBody.title, description: reqBody.description, date: reqBody.date, category: reqBody.category, location_id: reqBody.location_id},{id:reqParam.id})
+            if(updateSMSReport.status){
+                response = new ResponseModel(true,"SUCCESS",{message:"Event Updated Successfullly"});
+            }else{
+                response = new ResponseModel(false,"ERROR",{message:`Invalid Data`});
+            }
+        }else {
+            response=new ResponseModel(true,'ERROR',{message: 'You dont have an acceess'});
         }
+        
     }catch(error){
         response = new ResponseModel(false,"ERROR",{message:`${error.message}`});
     }
@@ -60,15 +83,20 @@ const updateEvent = async (req, res) => {
 }
 
 const deleteEvent = async (req, res) => {
-    let reqBody=req.body;
+    let reqParam = req.query;
     let response={}
     try {
-        let updateSMSReport=await updateQuery("events",{deleted_at: moment().format('yyyy-mm-dd:hh:mm:ss')},{id:reqBody.id})
-        if(updateSMSReport.status){
-            response = new ResponseModel(true,"SUCCESS",{message:"Event Deleted Successfullly"});
-        }else{
-            response = new ResponseModel(false,"ERROR",{message:`Invalid Data`});
+        if(reqBody.user_role == 'admin') {
+            let updateSMSReport=await updateQuery("events",{deleted_at: moment().format('yyyy-mm-dd:hh:mm:ss')},{id:reqParam.id})
+            if(updateSMSReport.status){
+                response = new ResponseModel(true,"SUCCESS",{message:"Event Deleted Successfullly"});
+            }else{
+                response = new ResponseModel(false,"ERROR",{message:`Invalid Data`});
+            }
+        }else {
+            response = new ResponseModel(false,"ERROR",{message:`${error.message}`});
         }
+        
     }catch(error){
         response = new ResponseModel(false,"ERROR",{message:`${error.message}`});
     }

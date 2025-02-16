@@ -6,13 +6,13 @@ const login = async (req, res) => {
     let reqBody=req.body;
     let response={}
     try {
-        let userList = await query(`SELECT * FROM users WHERE email='${reqBody.username}'`);
+        let userList = await query(`SELECT * FROM users WHERE email='${reqBody.email}'`);
         logger("jk userList",JSON.stringify(userList));
         if(userList.status&&userList.response.length!=0){
             if(userList.response[0].password_hash==reqBody.password){
-            response = new ResponseModel(true,"Success",{token:getEncrypt({id:userList.response[0].id,name:userList.response[0].name}),name:userList.response[0].name, role:userList.response[0].role});
+              response = new ResponseModel(true,"Success",{token:getEncrypt({id:userList.response[0].id,name:userList.response[0].name}),id:userList.response[0].id,name:userList.response[0].name, role:userList.response[0].role});
             }else{
-            response = new ResponseModel(false,"INCORRECT PASSWORD",{message:`Incorrect password`});
+              response = new ResponseModel(false,"INCORRECT PASSWORD",{message:`Incorrect password`});
             }
         }else{
             response = new ResponseModel(false,"INVALID USERNAME",{message:`Invalid Username`}); 
