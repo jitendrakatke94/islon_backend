@@ -9,7 +9,7 @@ router.route("/registration").post(registartion);
 
 router.route("/events").get(getEvents);
 router.route("/addEvent").post(addEvents);
-router.route("/updateEvent/:id").put(updateEvent);
-router.route("/deleteEvent/:id").delete(deleteEvent);
+router.route("/updateEvent").put(updateEvent);
+router.route("/deleteEvent").delete(deleteEvent);
 
 export default router;
